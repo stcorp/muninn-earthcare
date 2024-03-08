@@ -5,7 +5,7 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 from typing import Optional, Callable
 
-from muninn.geometry import Point, LinearRing, Polygon, MultiPolygon
+from muninn.geometry import LineString, Point
 from muninn.schema import Mapping, Text, Integer, Boolean, Timestamp
 from muninn.util import copy_path
 from muninn import Struct
@@ -36,51 +36,61 @@ def namespace(namespace_name):
 # Product types
 
 L0_PRODUCT_TYPES = [
-    "ATL_NOM_0_",
-    "BBR_NOM_0_",
-    "CPR_NOM_0_",
-    "MSI_NOM_0_",
-    "TLM_NOM_0_",
+    "ATL_NOM_0_",  # ATLID level 0 product (L0)
+    "BBR_NOM_0_",  # BBR level 0 product (L0)
+    "CPR_NOM_0_",  # CPR level 0 product (L0)
+    "MSI_NOM_0_",  # MSI level 0 product (L0)
+    "TLM_NOM_0_",  # GPS & STR annotated telemetry packets
 ]
 
 L1_PRODUCT_TYPES = [
-    "ATL_NOM_1B",
-    "BBR_NOM_1B",
-    "BBR_SNG_1B",
-    "CPR_NOM_1B",
-    "MSI_NOM_1B",
-    "MSI_RGR_1C",
-    "AUX_JSG_1D",
-    "AUX_MET_1D",
+    "ATL_NOM_1B",  # ATLID nominal L1 product (ATLID L1)
+    "ATL_DCC_1B",  # ATLID dark signal calibration product (ATLID L1)
+    "ATL_CSC_1B",  # ATLID coarse spectral calibration product (ATLID L1)
+    "ATL_FSC_1B",  # ATLID fine spectral calibration product (ATLID L1)
+    "BBR_NOM_1B",  # BBR nominal L1 product (BBR L1)
+    "BBR_SNG_1B",  # BBR single pixel L1 product (BBR L1)
+    "BBR_SOL_1B",  # BBR solar calibration product (BBR L1)
+    "BBR_LIN_1B",  # BBR linearity calibration product (BBR L1)
+    "CPR_NOM_1B",  # CPR nominal L1 product (JAXA)
+    "MSI_NOM_1B",  # MSI nominal L1 product (MSI L1)
+    "MSI_BBS_1B",  # MSI black body/deep space calibration product (MSI L1)
+    "MSI_SD1_1B",  # MSI nominal solar diffuser calibration product (MSI L1)
+    "MSI_SD2_1B",  # MSI redundant solar diffuser calibration product (MSI L1)
+    "MSI_DRK_1B",  # MSI VNS dark signal calibration product (MSI L1)
+    "MSI_TRF_1B",  # MSI TIR sensitivity reference parameters calibration product (MSI L1)
+    "MSI_RGR_1C",  # MSI regridded L1 product (MSI L1)
+    "AUX_JSG_1D",  # Joint standard grid (X-JSG)
+    "AUX_MET_1D",  # ECMWF meteorological parameters on EarthCARE swath (X-MET)
 ]
 
 L2_PRODUCT_TYPES = [
-    "ATL_FM__2A",
-    "ATL_ALD_2A",
-    "ATL_CTH_2A",
-    "ATL_AER_2A",
-    "ATL_EBD_2A",
-    "ATL_ICE_2A",
-    "ATL_TC__2A",
-    "ATL_TC__2A",
-    "CPR_CD__2A",
-    "CPR_CLD_2A",
-    "CPR_FMR_2A",
-    "CPR_TC__2A",
-    "MSI_AOT_2A",
-    "MSI_CM__2A",
-    "MSI_COP_2A",
-    "AC__TC__2B",
-    "ACM_3D__2B",
-    "ACM_CAP_2B",
-    "ACM_COM_2B",
-    "ACM_RT__2B",
-    "ALL_DF__2B",
-    "AM__ACD_2B",
-    "AM__CTH_2B",
-    "BM__RAD_2B",
-    "BMA_FLX_2B",
-    "AUX_CPRAPC",
+    "ATL_FM__2A",  # A-FM: ATLID feature mask (A-FM)
+    "ATL_ALD_2A",  # A-ALD: ATLID aerosol layer descriptors (A-LAY)
+    "ATL_CTH_2A",  # A-CTH: ATLID cloud top height (A-LAY)
+    "ATL_AER_2A",  # A-AER: ATLID aerosol parameters (A-PRO)
+    "ATL_EBD_2A",  # A-EBD: ATLID extinction, backscatter and depolarisation (A-PRO)
+    "ATL_ICE_2A",  # A-ICE: ATLID ice parameters (A-PRO)
+    "ATL_TC__2A",  # A-TC: ATLID target classification (A-PRO)
+    "CPR_APC_2A",  # C-APC: CPR antenna pointing correction (C-APC)
+    "CPR_CD__2A",  # C-CD: CPR Cloud Doppler parameters (C-PRO)
+    "CPR_CLD_2A",  # C-CLD: CPR cloud parameters (C-CLD)
+    "CPR_FMR_2A",  # C-FMR: CPR feature mask and radar reflectivity (C-PRO)
+    "CPR_TC__2A",  # C-TC: CPR target classification (C-PRO)
+    "MSI_AOT_2A",  # M-AOT: MSI aerosol optical thickness (M-AOT)
+    "MSI_CM__2A",  # M-CM: MSI cloud mask (M-CLD)
+    "MSI_COP_2A",  # M-COP: MSI cloud optical properties (M-CLD)
+    "AC__TC__2B",  # AC-TC: ATLID/CPR target classification (AC-TC)
+    "ACM_CAP_2B",  # ACM-CAP: Cloud and aerosol properties from ATLID/CPR/MSI (ACM-CAP)
+    "ACM_COM_2B",  # ACM-COM: ATLID/CPR/MSI composite product (ACM-COM)
+    "ACM_RT__2B",  # ACM-RT: Broadband radiances and fluxes from ATLID/CPR/MSI (ACM-COM)
+    "ALL_3D__2B",  # ACMB-3D: 3D scene construction (ACMB-3D)
+    "ALL_DF__2B",  # ACMB-DF: Radiative closure assessment, comparing broadband radiances and fluxes (ACMB-DF)
+    "AM__ACD_2B",  # AM-ACD: ATLID/MSI aerosol column descriptor (AM-COL)
+    "AM__CTH_2B",  # AM-CTH: ATLID/MSI cloud top height (AM-COL)
+    "AM__MO__2B",  # AM-MO: ATLID/MSI merged observations (AM-MO)
+    "BM__RAD_2B",  # BM-RAD: BBR radiances (using MSI for corrections) (BM-RAD)
+    "BMA_FLX_2B",  # BMA-FLX: BBR fluxes (using MSI and ATLID for corrections) (BMA-FLX)
 ]
 
 def compress(paths, target_filepath, compresslevel=None):
@@ -248,6 +258,17 @@ class EOFProduct(object):
         earthcare.processor_name = root.find(path).text
         path = start_node_path + "Fixed_Header/Source/Creator_Version"
         earthcare.processor_version = root.find(path).text
+
+        # Extract geolocation information from frame start/stop position, if available
+        path = start_node_path + "Variable_Header/MainProductHeader/frameStartCoordinates"
+        coord = root.find(path)
+        if coord is not None:
+            start_lat = float(coord.find("./GeographicCoordinates/geographicLatitude").text)
+            start_lon = float(coord.find("./GeographicCoordinates/geographicLongitude").text)
+            coord = root.find(start_node_path + "Variable_Header/MainProductHeader/frameStopCoordinates")
+            stop_lat = float(coord.find("./GeographicCoordinates/geographicLatitude").text)
+            stop_lon = float(coord.find("./GeographicCoordinates/geographicLongitude").text)
+            core.footprint = LineString([Point(start_lon, start_lat), Point(stop_lon, stop_lat)])
 
     def export_zip(self, archive, properties, target_path, paths):
         if self.is_zipped(paths[0]):
