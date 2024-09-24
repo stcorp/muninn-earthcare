@@ -93,6 +93,20 @@ L2_PRODUCT_TYPES = [
     "BMA_FLX_2B",  # BMA-FLX: BBR fluxes (using MSI and ATLID for corrections) (BMA-FLX)
 ]
 
+GEO_PRODUCT_TYPES = [
+    "GEO_ATTOBS",  # Reconstructed Attitude File
+    "GEO_ORBOBS",  # Reconstructed Orbit File
+]
+
+FOS_PRODUCT_TYPES = [
+    "AUX_ORBPRE",  # Predicted Orbit File
+    "AUX_ORBRES",  # Reconstituted Orbit File
+]
+
+MPL_PRODUCT_TYPES = [
+    "MPL_ORBSCT",  # Orbit Scenario File
+]
+
 def compress(paths, target_filepath, compresslevel=None):
     if compresslevel is None:
         compression = zipfile.ZIP_STORED
@@ -188,7 +202,7 @@ class EOFProduct(object):
         core.product_name = os.path.splitext(file_name)[0]
         core.validity_start = datetime.strptime(file_name_attrs["validity_start"], "%Y%m%dT%H%M%SZ")
         if "validity_stop" in file_name_attrs:
-            if file_name_attrs["validity_stop"] == "99999999T999999":
+            if file_name_attrs["validity_stop"] == "99999999T999999Z":
                 core.validity_stop = datetime.max
             else:
                 core.validity_stop = datetime.strptime(file_name_attrs["validity_stop"], "%Y%m%dT%H%M%SZ")
@@ -197,7 +211,7 @@ class EOFProduct(object):
             earthcare.file_class = file_name_attrs["file_class"]
             earthcare.baseline = earthcare.file_class[2:]
         if "version" in file_name_attrs:
-            earthcare.version_number = file_name_attrs["version"]
+            earthcare.version_number = int(file_name_attrs["version"])
         if "orbit_number" in file_name_attrs:
             earthcare.orbit_number = int(file_name_attrs["orbit_number"])
         if "frame_id" in file_name_attrs:
@@ -248,8 +262,11 @@ class EOFProduct(object):
 
         path = start_node_path + "Fixed_Header/Validity_Period/Validity_Start"
         core.validity_start = datetime.strptime(root.find(path).text, "UTC=%Y-%m-%dT%H:%M:%S")
-        path = start_node_path + "Fixed_Header/Validity_Period/Validity_Stop"
-        core.validity_stop = datetime.strptime(root.find(path).text, "UTC=%Y-%m-%dT%H:%M:%S")
+        value = root.find(start_node_path + "Fixed_Header/Validity_Period/Validity_Stop").text
+        if value == "UTC=9999-99-99T99:99:99":
+            core.validity_stop = datetime.max
+        else:
+            core.validity_stop = datetime.strptime(value, "UTC=%Y-%m-%dT%H:%M:%S")
         path = start_node_path + "Fixed_Header/Source/Creation_Date"
         core.creation_date = datetime.strptime(root.find(path).text, "UTC=%Y-%m-%dT%H:%M:%S")
         path = start_node_path + "Fixed_Header/Source/System"
@@ -284,7 +301,7 @@ class EOFProduct(object):
 
 
 class EarthCAREProduct(EOFProduct):
-    def __init__(self, product_type, zipped=None):
+    def __init__(self, product_type, extension=None, zipped=None):
         pattern = [
             r"^ECA",
             r"(?P<file_class>\w{4})",
@@ -293,13 +310,29 @@ class EarthCAREProduct(EOFProduct):
             r"(?P<creation_date>\d{8}T\d{6}Z)",
             r"(?P<orbit_number>\d{5})(?P<frame_id>[A-Z])",
         ]
-        super().__init__(product_type, filename_base_pattern=r"_".join(pattern), zipped=zipped)
+        super().__init__(product_type, filename_base_pattern=r"_".join(pattern), extension=extension, zipped=zipped)
+
+
+class AUXProduct(EOFProduct):
+    def __init__(self, product_type, zipped=None):
+        pattern = [
+            r"^ECA",
+            r"(?P<file_class>\w{4})",
+            product_type,
+            r"(?P<validity_start>\d{8}T\d{6}Z)",
+            r"(?P<validity_stop>\d{8}T\d{6}Z)",
+            r"(?P<version>\d{4})",
+        ]
+        super().__init__(product_type, filename_base_pattern=r"_".join(pattern), extension=".EOF", zipped=zipped)
 
 
 _product_types = dict(
     [(product_type, EarthCAREProduct(product_type)) for product_type in L0_PRODUCT_TYPES] +
     [(product_type, EarthCAREProduct(product_type)) for product_type in L1_PRODUCT_TYPES] +
-    [(product_type, EarthCAREProduct(product_type)) for product_type in L2_PRODUCT_TYPES]
+    [(product_type, EarthCAREProduct(product_type)) for product_type in L2_PRODUCT_TYPES] +
+    [(product_type, EarthCAREProduct(product_type, extension=".EOF")) for product_type in GEO_PRODUCT_TYPES] +
+    [(product_type, AUXProduct(product_type)) for product_type in FOS_PRODUCT_TYPES] +
+    [(product_type, AUXProduct(product_type)) for product_type in MPL_PRODUCT_TYPES]
 )
 
 
