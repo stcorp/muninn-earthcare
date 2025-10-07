@@ -3,13 +3,12 @@ import re
 import zipfile
 from datetime import datetime
 import xml.etree.ElementTree as ET
-from typing import Optional, Callable
+from typing import Optional
 
 from muninn.geometry import LineString, Point
-from muninn.schema import Mapping, Text, Integer, Boolean, Timestamp
+from muninn.schema import Mapping, Text, Integer
 from muninn.util import copy_path
 from muninn import Struct
-from muninn import Error as MuninnError
 
 
 # Namespaces
@@ -106,6 +105,7 @@ FOS_PRODUCT_TYPES = [
 MPL_PRODUCT_TYPES = [
     "MPL_ORBSCT",  # Orbit Scenario File
 ]
+
 
 def compress(paths, target_filepath, compresslevel=None):
     if compresslevel is None:
