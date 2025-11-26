@@ -63,7 +63,7 @@ L1_PRODUCT_TYPES = [
     "AUX_MET_1D",  # ECMWF meteorological parameters on EarthCARE swath (X-MET)
 ]
 
-L2_PRODUCT_TYPES = [
+ESA_L2_PRODUCT_TYPES = [
     "ATL_FM__2A",  # A-FM: ATLID feature mask (A-FM)
     "ATL_ALD_2A",  # A-ALD: ATLID aerosol layer descriptors (A-LAY)
     "ATL_CTH_2A",  # A-CTH: ATLID cloud top height (A-LAY)
@@ -91,6 +91,18 @@ L2_PRODUCT_TYPES = [
     "BM__RAD_2B",  # BM-RAD: BBR radiances (using MSI for corrections) (BM-RAD)
     "BMA_FLX_2B",  # BMA-FLX: BBR fluxes (using MSI and ATLID for corrections) (BMA-FLX)
 ]
+
+JAXA_L2_PRODUCT_TYPES = [
+    "CPR_ECO_2A",  # CPR_ECO: CPR One-sensor Echo Product
+    "CPR_CLP_2A",  # CPR_CLP: CPR One-sensor Cloud Product
+    "ATL_CLA_2A",  # ATL_CLA: ATLID One-sensor Cloud and Aerosol Product
+    "MSI_CLP_2A",  # MSI_CLP: MSI One-sensor Cloud Product
+    "AC__CLP_2B",  # AC_CLP: CPR-ATLID Synergy Cloud Product
+    "ACM_CLP_2B",  # ACM_CLP: CPR-ATLID-MSI Synergy Cloud Product
+    "ALL_RAD_2B",  # ALL_RAD: Four Sensors Synergy Radiation Budget Product
+]
+
+L2_PRODUCT_TYPES = ESA_L2_PRODUCT_TYPES + JAXA_L2_PRODUCT_TYPES
 
 GEO_PRODUCT_TYPES = [
     "GEO_ATTOBS",  # Reconstructed Attitude File
